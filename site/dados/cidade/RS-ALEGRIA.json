@@ -1,0 +1,1 @@
+{"cidade": "Alegria", "uf": "RS", "postos": [{"cnpj": "00871975000195", "nome": "Posto de Combustivel Seu Joao Ltda.", "endereco": "Rua Sao Joao", "numero": "395", "bairro": "Centro", "cidade": "Alegria", "uf": "RS", "bandeira": "Charrua", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "gasolina"], "lat": -27.829702, "lon": -54.05706, "precisao": "oficial"}]}

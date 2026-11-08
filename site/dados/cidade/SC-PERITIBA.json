@@ -1,0 +1,1 @@
+{"cidade": "Peritiba", "uf": "SC", "postos": [{"cnpj": "09155931000133", "nome": "Posto de Abastecimento Maralex Ltda", "endereco": "Rua do Comercio", "numero": "", "bairro": "Centro", "cidade": "Peritiba", "uf": "SC", "bandeira": "Idaza", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "gasolina", "gnv"], "lat": -27.370995, "lon": -51.901807, "precisao": "oficial"}]}

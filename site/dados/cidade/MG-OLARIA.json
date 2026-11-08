@@ -1,0 +1,1 @@
+{"cidade": "Olaria", "uf": "MG", "postos": [{"cnpj": "64506152000143", "nome": "Posto de Combustiveis Santo Antonio Ltda", "endereco": "Rua Santos Dumont", "numero": "569", "bairro": "Centro", "cidade": "Olaria", "uf": "MG", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "gasolina"], "lat": -21.86196, "lon": -43.93476, "precisao": "oficial"}]}

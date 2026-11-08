@@ -1,0 +1,1 @@
+{"cidade": "Pau Brasil", "uf": "BA", "postos": [{"cnpj": "02345844000108", "nome": "Posto Jequitiba Ltda", "endereco": "Avenida Pedro Alvares", "numero": "1313", "bairro": "Centro", "cidade": "Pau Brasil", "uf": "BA", "bandeira": "Petrobahia", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina"], "lat": -15.473537, "lon": -39.64459, "precisao": "oficial"}]}

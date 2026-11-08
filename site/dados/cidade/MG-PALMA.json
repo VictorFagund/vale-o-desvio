@@ -1,0 +1,1 @@
+{"cidade": "Palma", "uf": "MG", "postos": [{"cnpj": "05069671000122", "nome": "Corte Real Combustiveis Eireli", "endereco": "Rua Francisco de Paula Pinto", "numero": "83", "bairro": "Centro", "cidade": "Palma", "uf": "MG", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s10", "etanol", "gasolina"], "lat": -21.376967, "lon": -42.318961, "precisao": "oficial"}]}

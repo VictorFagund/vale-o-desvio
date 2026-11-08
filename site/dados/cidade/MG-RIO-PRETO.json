@@ -1,0 +1,1 @@
+{"cidade": "Rio Preto", "uf": "MG", "postos": [{"cnpj": "19233261000180", "nome": "Comercio de Combustiveis Rio Preto Ltda", "endereco": "Rua Dr Alipio M Ribeiro", "numero": "85", "bairro": "Centro", "cidade": "Rio Preto", "uf": "MG", "bandeira": "Ale", "precos": {}, "vende": ["diesel_s10", "etanol", "gasolina"], "lat": -22.08849, "lon": -43.827604, "precisao": "oficial"}]}

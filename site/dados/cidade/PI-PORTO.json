@@ -1,0 +1,1 @@
+{"cidade": "Porto", "uf": "PI", "postos": [{"cnpj": "33915209000134", "nome": "Benavenuta Combustiveis Ltda.", "endereco": "Avenida Matias Olimpio", "numero": "1105", "bairro": "Centro", "cidade": "Porto", "uf": "PI", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s500", "gasolina", "gnv"], "lat": -3.894397, "lon": -42.706858, "precisao": "oficial"}]}

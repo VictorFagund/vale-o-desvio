@@ -1,0 +1,10 @@
+# Baixado/gerado localmente (recriado pelos scripts)
+dados/brutos/
+dados/geocache.json
+dados/*.log
+__pycache__/
+
+# Fica só na máquina: Nota Paraná desativada e pedido pessoal
+dados/nota_backup/
+dados/pr_menorpreco.py
+pedido_sefaz_pr.md

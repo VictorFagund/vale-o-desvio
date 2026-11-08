@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vale o Desvio</title>
+<meta name="description" content="Qual posto compensa de verdade: preço, distância e o que você gasta para chegar lá.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="estilo.css?v=2" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <aside class="painel" id="painel">
+    <div class="alca" aria-hidden="true"></div>
+    <header class="topo">
+      <div class="marca">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M5 3h8a2 2 0 0 1 2 2v6h1a3 3 0 0 1 3 3v3.5a1.5 1.5 0 0 0 3 0V9.8a2 2 0 0 0-.6-1.4L18.3 6.3l1.4-1.4 2.1 2.1A4 4 0 0 1 23 9.8v7.7a3.5 3.5 0 0 1-7 0V14a1 1 0 0 0-1-1h-0v8H3V5a2 2 0 0 1 2-2Zm0 2v5h8V5H5Z"/></svg>
+        <span>Vale o Desvio</span>
+      </div>
+      <label class="cidade">
+        <span class="sr">Cidade</span>
+        <input id="cidade" list="lista-cidades" placeholder="Buscar cidade" autocomplete="off">
+        <datalist id="lista-cidades"></datalist>
+      </label>
+    </header>
+
+    <div class="controles">
+      <div class="seg" id="combustivel" role="radiogroup" aria-label="Combustível"></div>
+      <div class="ajustes">
+        <label>Litros <input id="litros" type="number" min="5" max="200" step="5" value="40" inputmode="numeric"></label>
+        <label>Consumo <input id="consumo" type="number" min="3" max="30" step="0.5" value="10" inputmode="decimal"><small>km/l</small></label>
+        <label title="Quanto vale uma hora sua. Zero ignora o tempo.">Hora <input id="hora" type="number" min="0" max="500" step="5" value="15" inputmode="numeric"><small>R$</small></label>
+      </div>
+      <p class="origem" id="origem"></p>
+    </div>
+
+    <section class="destaque" id="destaque" aria-live="polite"></section>
+    <h2 class="titulo-lista" id="titulo-lista"></h2>
+    <ol class="lista" id="lista"></ol>
+
+    <footer class="rodape" id="rodape"></footer>
+  </aside>
+  <main class="mapa" id="mapa" aria-label="Mapa dos postos"></main>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>

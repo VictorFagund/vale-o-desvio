@@ -1,0 +1,1 @@
+{"cidade": "Santa Mônica", "uf": "PR", "postos": [{"cnpj": "68591500000189", "nome": "Comercio de Combustiveis N4 Ltda", "endereco": "Travessa Carlos Gomes", "numero": "536", "bairro": "Centro", "cidade": "Santa Mônica", "uf": "PR", "bandeira": "Ciapetro", "precos": {}, "vende": ["diesel_s10", "etanol", "gasolina"], "lat": -23.110246, "lon": -53.108325, "precisao": "oficial"}]}

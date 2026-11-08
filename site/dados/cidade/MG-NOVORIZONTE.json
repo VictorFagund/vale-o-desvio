@@ -1,0 +1,1 @@
+{"cidade": "Novorizonte", "uf": "MG", "postos": [{"cnpj": "40142232000107", "nome": "Posto Elias Freitas Ltda", "endereco": "Rua Um", "numero": "225", "bairro": "Campo Verde", "cidade": "Novorizonte", "uf": "MG", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina"], "lat": -15.971443, "lon": -42.460761, "precisao": "oficial"}]}

@@ -1,0 +1,1 @@
+{"cidade": "Nantes", "uf": "SP", "postos": [{"cnpj": "02727080000107", "nome": "Posto Nantes Ltda", "endereco": "Rua Clementino", "numero": "10", "bairro": "Centro", "cidade": "Nantes", "uf": "SP", "bandeira": "Ipiranga", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina"], "lat": -22.616315, "lon": -51.239594, "precisao": "oficial"}]}

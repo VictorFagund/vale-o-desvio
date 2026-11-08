@@ -1,0 +1,1 @@
+{"cidade": "Caracol", "uf": "MS", "postos": [{"cnpj": "00101304000226", "nome": "Divisa Auto Posto Ltda", "endereco": "Avenida Brasil", "numero": "1000", "bairro": "Centro", "cidade": "Caracol", "uf": "MS", "bandeira": "Ipiranga", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina", "gnv"], "lat": -22.015181, "lon": -57.032418, "precisao": "oficial"}]}

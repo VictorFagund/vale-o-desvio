@@ -1,0 +1,1 @@
+{"cidade": "Chácara", "uf": "MG", "postos": [{"cnpj": "03271425000123", "nome": "Posto Chacara Ltda", "endereco": "Rua Coronel Augusto de Paula", "numero": "853", "bairro": "Centro", "cidade": "Chácara", "uf": "MG", "bandeira": "Vibra", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina", "gnv"], "lat": -21.670942, "lon": -43.223971, "precisao": "oficial"}]}

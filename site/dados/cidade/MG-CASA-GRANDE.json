@@ -1,0 +1,1 @@
+{"cidade": "Casa Grande", "uf": "MG", "postos": [{"cnpj": "63388723000120", "nome": "Alianca Combustivel Ltda", "endereco": "Avenida Getulio Vargas", "numero": "50", "bairro": "Centro", "cidade": "Casa Grande", "uf": "MG", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "gasolina"], "lat": -20.792959, "lon": -43.92718, "precisao": "oficial"}]}

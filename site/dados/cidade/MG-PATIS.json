@@ -1,0 +1,1 @@
+{"cidade": "Patis", "uf": "MG", "postos": [{"cnpj": "58502930000123", "nome": "Auto Posto Combustivel Ideal Ii Ltda", "endereco": "Avenida Geraldo Athayde", "numero": "227", "bairro": "Centro", "cidade": "Patis", "uf": "MG", "bandeira": "Bandeira branca", "precos": {}, "vende": ["diesel_s500", "etanol", "gasolina"], "lat": -16.082949, "lon": -44.085067, "precisao": "oficial"}]}

@@ -1,0 +1,1 @@
+{"cidade": "Leópolis", "uf": "PR", "postos": [{"cnpj": "26699847000108", "nome": "Posto Passagnolo Ltda", "endereco": "Avenida Munhoz da Rocha", "numero": "05", "bairro": "Centro", "cidade": "Leópolis", "uf": "PR", "bandeira": "Raizen", "precos": {}, "vende": ["diesel_s10", "diesel_s500", "etanol", "gasolina"], "lat": -23.07735, "lon": -50.752364, "precisao": "oficial"}]}
