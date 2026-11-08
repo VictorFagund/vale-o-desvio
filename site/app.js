@@ -353,7 +353,10 @@ async function abrirCidade(info) {
     const pts = estado.postos.filter((p) => p.lat != null && distanciaReta(c, p) < 40);
     const b = new maplibregl.LngLatBounds();
     pts.forEach((p) => b.extend([p.lon, p.lat]));
-    mapa.fitBounds(b, { padding: 50, duration: 0, maxZoom: 14 });   // cidade com 1-2 postos não vira zoom de rua
+    const enquadrar = () => mapa.fitBounds(b, { padding: 50, duration: 0, maxZoom: 14 });   // cidade com 1-2 postos não vira zoom de rua
+    enquadrar();
+    // Se o estilo do mapa termina de carregar depois, ele volta a câmera para o início: enquadra de novo.
+    if (!mapa.loaded()) mapa.once("load", () => { if (estado.cidade === info) enquadrar(); });
     definirOrigem(c, "centro");
   } else {
     textoOrigem();
