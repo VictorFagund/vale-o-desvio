@@ -170,6 +170,24 @@ function marca(bandeira) {
   return { nome: bandeira, cor: "#5f6662", sigla: bandeira.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "?" };
 }
 
+/* Foto da fachada pelo Street View (só com chave em config.js).
+   Primeiro pergunta ao "metadata" (gratuito) se existe foto ali; só então carrega a imagem (cobrada). */
+const fotosConferidas = new Map();   // cnpj -> Promise<url|null>
+
+function fotoDoPosto(p) {
+  const chave = window.VOD_CONFIG?.GOOGLE_KEY;
+  if (!chave || p.lat == null) return Promise.resolve(null);
+  if (!fotosConferidas.has(p.cnpj)) {
+    const base = "https://maps.googleapis.com/maps/api/streetview";
+    const onde = `location=${p.lat},${p.lon}&source=outdoor&radius=60&key=${encodeURIComponent(chave)}`;
+    fotosConferidas.set(p.cnpj, fetch(`${base}/metadata?${onde}`)
+      .then((r) => r.json())
+      .then((m) => (m.status === "OK" ? `${base}?size=640x320&fov=80&${onde}` : null))
+      .catch(() => null));
+  }
+  return fotosConferidas.get(p.cnpj);
+}
+
 function tabelaPrecos(p) {
   const tab = document.createElement("table");
   tab.className = "precos";
@@ -208,6 +226,16 @@ function desenharDetalhe(p, linhas, perto) {
     <h3 class="secao comparar-titulo"></h3>
     <ol class="lista comparar"></ol>`;
   box.querySelector(".marca-nome").textContent = m.nome;
+  fotoDoPosto(p).then((url) => {
+    const capa = box.querySelector(".capa");
+    if (!url || !capa || estado.selecionado !== p.cnpj) return;
+    const img = new Image();
+    img.className = "foto";
+    img.alt = `Fachada de ${p.nome} (Google Street View)`;
+    img.onload = () => capa.classList.add("com-foto");
+    img.src = url;
+    capa.prepend(img);
+  });
   box.querySelector(".nome-posto").textContent = p.nome;
   box.querySelector(".endereco").textContent = [[p.endereco + (p.numero ? ", " + p.numero : ""), p.bairro].filter(Boolean).join(" · "), p.cidade].filter(Boolean).join(" · ");
   box.querySelector(".voltar").onclick = voltarParaLista;

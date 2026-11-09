@@ -145,6 +145,14 @@ button, input { font: inherit; color: inherit; }
     linear-gradient(135deg, color-mix(in srgb, var(--marca) 92%, #000) 0%, var(--marca) 55%, color-mix(in srgb, var(--marca) 70%, #fff) 100%);
   color: #fff; display: flex; align-items: flex-end; gap: 12px; padding: 14px;
 }
+/* Com foto do Street View: a foto ocupa a capa e um degradê escuro mantém o texto legível. */
+.capa .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease; }
+.capa.com-foto { height: 170px; }
+.capa.com-foto .foto { opacity: 1; }
+.capa.com-foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / .62), transparent 60%); }
+.capa > :not(.foto) { position: relative; z-index: 1; }
+.capa .fachada { position: absolute; }
+.capa.com-foto .selo { background: var(--marca); }
 .capa .selo {
   width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center;
   background: rgb(255 255 255 / .16); border: 2px solid rgb(255 255 255 / .55);
