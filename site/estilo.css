@@ -131,28 +131,55 @@ button, input { font: inherit; color: inherit; }
 .pino.melhor { outline: 3px solid color-mix(in srgb, var(--verde) 35%, transparent); }
 .item.sem-preco .preco { font-size: 13px; font-weight: 700; color: var(--suave); }
 
-/* Balão do posto no mapa (na frente dos rótulos de preço) */
-.maplibregl-popup { z-index: 5; }
-.maplibregl-popup-content { padding: 14px 14px 12px; box-shadow: var(--sombra); font-family: Manrope, system-ui, sans-serif; }
-.maplibregl-popup-close-button { font-size: 20px; width: 30px; height: 30px; color: var(--suave); }
-.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--painel); }
-.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--painel); }
-.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--painel); }
-.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--painel); }
-.balao h4 { margin: 0 24px 2px 0; font-size: 15.5px; line-height: 1.25; }
-.balao .sub { font-size: 12.5px; color: var(--suave); }
-.balao .conta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 13px; }
-.balao table { width: 100%; border-collapse: collapse; margin: 8px 0 10px; font-size: 13.5px; }
-.balao th { text-align: left; font-weight: 600; color: var(--suave); padding: 4px 0; }
-.balao td { padding: 4px 0 4px 8px; text-align: right; white-space: nowrap; }
-.balao td.valor { font-weight: 800; }
-.balao td.idade { font-size: 11.5px; color: var(--suave); }
-.balao td.idade.velho { color: var(--ambar); }
-.balao tr + tr { border-top: 1px solid var(--linha); }
-.balao tr.atual th, .balao tr.atual td.valor { color: var(--texto); }
-.balao tr.atual th::before { content: "● "; color: var(--verde); }
-.balao .nota { font-size: 12.5px; color: var(--suave); margin: 0 0 10px; }
-.balao .acoes a { padding: 7px 8px; font-size: 13px; }
+/* Ficha do posto: substitui a lista quando um posto é escolhido */
+.painel.modo-detalhe .destaque, .painel.modo-detalhe .titulo-lista, .painel.modo-detalhe #lista { display: none; }
+.detalhe { display: flex; flex-direction: column; gap: 10px; scroll-margin-top: 8px; }
+.detalhe[hidden] { display: none; }
+.voltar {
+  align-self: flex-start; background: none; border: 0; padding: 4px 0; cursor: pointer;
+  color: var(--verde); font-weight: 700; font-size: 14px;
+}
+.capa {
+  position: relative; height: 120px; border-radius: var(--raio); overflow: hidden;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--marca) 92%, #000) 0%, var(--marca) 55%, color-mix(in srgb, var(--marca) 70%, #fff) 100%);
+  color: #fff; display: flex; align-items: flex-end; gap: 12px; padding: 14px;
+}
+.capa .selo {
+  width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center;
+  background: rgb(255 255 255 / .16); border: 2px solid rgb(255 255 255 / .55);
+  font-weight: 800; font-size: 19px; letter-spacing: .02em;
+}
+.capa .marca-nome { font-weight: 800; font-size: 16px; padding-bottom: 4px; }
+.capa .fachada {
+  position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 700; color: #fff;
+  background: rgb(0 0 0 / .28); padding: 5px 9px; border-radius: 999px; text-decoration: none;
+}
+.capa .fachada:hover { background: rgb(0 0 0 / .45); }
+.nome-posto { margin: 2px 0 0; font-size: 21px; line-height: 1.2; letter-spacing: -.01em; }
+.endereco { margin: 0; color: var(--suave); font-size: 13.5px; }
+.veredito-grande {
+  border-radius: 12px; padding: 12px 14px; background: var(--campo);
+  display: flex; flex-direction: column; gap: 4px; color: var(--texto);
+}
+.veredito-grande b { font-size: 16px; }
+.veredito-grande span { font-size: 12.5px; color: var(--suave); }
+.veredito-grande.v-compensa { background: var(--verde-claro); }
+.veredito-grande.v-compensa b { color: var(--verde); }
+.veredito-grande.v-nao { background: var(--vermelho-claro); }
+.veredito-grande.v-nao b { color: var(--vermelho); }
+.secao { margin: 8px 0 0; font-size: 13px; color: var(--suave); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.precos { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.precos th { text-align: left; font-weight: 600; color: var(--suave); padding: 8px 0; }
+.precos td { padding: 8px 0 8px 10px; text-align: right; white-space: nowrap; }
+.precos td.valor { font-weight: 800; }
+.precos td.valor.vazio { font-weight: 600; color: var(--suave); }
+.precos td.idade { font-size: 12px; color: var(--suave); }
+.precos td.idade.velho { color: var(--ambar); }
+.precos tr + tr { border-top: 1px solid var(--linha); }
+.precos tr.atual th { color: var(--texto); }
+.precos tr.atual th::before { content: "● "; color: var(--verde); }
+.pino.sem { font-size: 11px; color: var(--suave); }
 .voce {
   width: 18px; height: 18px; border-radius: 50%; background: #2f6fed; border: 3px solid #fff;
   box-shadow: 0 0 0 6px rgb(47 111 237 / .25); cursor: grab;
@@ -169,12 +196,4 @@ button, input { font: inherit; color: inherit; }
   .alca { display: block; width: 40px; height: 4px; border-radius: 4px; background: var(--linha); margin: 0 auto 4px; }
   .topo { flex-wrap: wrap; }
   .cidade input { width: 150px; }
-  /* Balão compacto: o mapa no celular tem ~40% da altura da tela. */
-  .maplibregl-popup-content { padding: 10px 12px 10px; }
-  .balao h4 { font-size: 14px; }
-  .balao .sub { font-size: 11.5px; }
-  .balao .conta { margin-top: 4px; font-size: 12px; }
-  .balao table { margin: 4px 0 8px; font-size: 12.5px; }
-  .balao th, .balao td { padding-top: 2px; padding-bottom: 2px; }
-  .balao .acoes a { padding: 6px 8px; }
 }

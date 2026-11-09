@@ -18,7 +18,7 @@ const estado = {
   indice: null, cidade: null, postos: [], combustivel: "gasolina",
   litros: 40, consumo: 10, hora: 15, origem: null, rotas: new Map(), selecionado: null,
 };
-let mapa, marcadores = new Map(), marcadorVoce = null, pedidoRotas = 0, balao = null;
+let mapa, marcadores = new Map(), marcadorVoce = null, pedidoRotas = 0;
 
 function guardar(k, v) { try { localStorage.setItem("vod:" + k, v); } catch (_) {} }
 function ler(k) { try { return localStorage.getItem("vod:" + k); } catch (_) { return null; } }
@@ -93,7 +93,12 @@ function desenhar() {
   const nomeComb = COMBUSTIVEIS.find((c) => c[0] === estado.combustivel)[1];
   const lista = $("#lista");
   lista.innerHTML = "";
-  estado.linhaDe = new Map(linhas.map((l) => [l.p.cnpj, l]));   // o balão do mapa usa a conta do posto
+
+  // Posto escolhido: o painel mostra a ficha dele (e a comparação embaixo) no lugar da lista.
+  const escolhido = estado.selecionado && estado.postos.find((p) => p.cnpj === estado.selecionado);
+  $("#painel").classList.toggle("modo-detalhe", !!escolhido);
+  $("#detalhe").hidden = !escolhido;
+  if (escolhido) desenharDetalhe(escolhido, linhas, perto);
 
   if (!linhas.length) {
     $("#destaque").innerHTML = "";
@@ -152,72 +157,117 @@ function itemSemPreco(p) {
   return li;
 }
 
-/* ---------- balão do posto (clique no mapa ou na lista) ---------- */
-function conteudoBalao(p) {
-  const el = document.createElement("div");
-  el.className = "balao";
-  const h = document.createElement("h4"); h.textContent = p.nome; el.appendChild(h);
-  const sub = document.createElement("div"); sub.className = "sub";
-  sub.textContent = [[p.endereco + (p.numero ? ", " + p.numero : ""), p.bairro].filter(Boolean).join(" · "), p.bandeira].filter(Boolean).join(" · ");
-  el.appendChild(sub);
+/* ---------- ficha do posto (clique no mapa ou na lista) ---------- */
 
-  // A conta do combustível escolhido (distância, tempo, se compensa).
-  const l = estado.linhaDe?.get(p.cnpj);
-  if (l && l.km != null) {
-    const conta = document.createElement("div"); conta.className = "conta";
-    const [classe, txt] = vereditoTexto(l);
-    conta.innerHTML = `<span>${km1(l.km)}${l.real ? "" : " ≈"} · ${Math.max(1, Math.round(l.min))} min</span><b class="${classe}"></b>`;
-    conta.querySelector("b").textContent = txt;
-    el.appendChild(conta);
-  }
+// Sem foto de verdade (exigiria chave do Google/Mapillary): a capa usa a cor e a sigla da bandeira.
+function marca(bandeira) {
+  const b = (bandeira || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  if (b.includes("ipiranga")) return { nome: "Ipiranga", cor: "#0a4ea1", sigla: "IP" };
+  if (b.includes("raizen") || b.includes("shell")) return { nome: "Shell (Raízen)", cor: "#c8171c", sigla: "SH" };
+  if (b.includes("vibra") || b.includes("petrobras") || b === "br") return { nome: "BR (Vibra)", cor: "#00813f", sigla: "BR" };
+  if (b === "ale" || b.startsWith("ale ")) return { nome: "Ale", cor: "#1a3f8f", sigla: "AL" };
+  if (!b || b.includes("branca")) return { nome: "Bandeira branca", cor: "#5f6662", sigla: "BB" };
+  return { nome: bandeira, cor: "#5f6662", sigla: bandeira.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "?" };
+}
 
-  // Todos os combustíveis: com preço da ANP ou só "vende".
+function tabelaPrecos(p) {
   const tab = document.createElement("table");
+  tab.className = "precos";
+  const nomes = Object.fromEntries(COMBUSTIVEIS);
   const chaves = COMBUSTIVEIS.map((c) => c[0]).filter((k) => p.precos[k] || (p.vende || []).includes(k));
   for (const k of chaves) {
     const tr = document.createElement("tr");
     if (k === estado.combustivel) tr.className = "atual";
     const pr = p.precos[k];
     const idade = pr ? idadeTexto(pr.data) : null;
-    tr.innerHTML = `<th></th><td class="valor">${pr ? brl(pr.valor) : "sem preço"}</td><td class="idade ${idade?.velho ? "velho" : ""}">${idade ? idade.texto.replace("ANP, coletado ", "") : ""}</td>`;
-    tr.querySelector("th").textContent = Object.fromEntries(COMBUSTIVEIS)[k];
+    tr.innerHTML = `<th></th><td class="valor${pr ? "" : " vazio"}">${pr ? brl(pr.valor) : "sem preço"}</td><td class="idade ${idade?.velho ? "velho" : ""}">${idade ? idade.texto.replace("ANP, coletado ", "") : ""}</td>`;
+    tr.querySelector("th").textContent = nomes[k];
     tab.appendChild(tr);
   }
-  if (chaves.length) el.appendChild(tab);
-  if (!Object.keys(p.precos).length) {
-    const av = document.createElement("p"); av.className = "nota";
-    av.textContent = "A ANP não pesquisou o preço deste posto nas últimas semanas.";
-    el.appendChild(av);
-  }
-  const destino = `${p.lat},${p.lon}`;
-  const acoes = document.createElement("div"); acoes.className = "acoes";
-  acoes.innerHTML = `<a href="https://www.google.com/maps/dir/?api=1&destination=${destino}" target="_blank" rel="noopener">Google Maps</a><a class="secundario" href="https://waze.com/ul?ll=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a>`;
-  el.appendChild(acoes);
-  return el;
+  return tab;
 }
 
-const telaEstreita = () => innerWidth < 760;   // celular: mapa é a faixa de cima, painel cobre o resto
-
-function abrirBalao(p, voar = false) {
-  const antigo = balao; balao = null;
-  if (antigo) antigo.remove();
-  if (!p || p.lat == null) return;
-  const opcoes = { maxWidth: "280px", offset: 14, focusAfterOpen: false };
-  if (telaEstreita()) opcoes.anchor = "bottom";   // sempre para cima: embaixo fica o painel
-  const este = new maplibregl.Popup(opcoes)
-    .setLngLat([p.lon, p.lat]).setDOMContent(conteudoBalao(p)).addTo(mapa);
-  if (telaEstreita()) {
-    // Leva o posto para perto da borda de baixo do mapa, para o balão caber em cima dele.
-    const h = mapa.getContainer().clientHeight;
-    mapa.easeTo({ center: [p.lon, p.lat], offset: [0, h / 2 - 24], zoom: voar ? Math.max(mapa.getZoom(), 14) : mapa.getZoom(), duration: 300 });
-  } else if (voar) {
-    mapa.flyTo({ center: [p.lon, p.lat], zoom: Math.max(mapa.getZoom(), 14) });
+function desenharDetalhe(p, linhas, perto) {
+  const box = $("#detalhe");
+  const m = marca(p.bandeira);
+  const destino = `${p.lat},${p.lon}`;
+  const rua = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${destino}`;
+  box.innerHTML = `
+    <button type="button" class="voltar">← Todos os postos</button>
+    <div class="capa" style="--marca:${m.cor}">
+      <span class="selo">${m.sigla}</span>
+      <span class="marca-nome"></span>
+      <a class="fachada" href="${rua}" target="_blank" rel="noopener">Ver a fachada no Street View ↗</a>
+    </div>
+    <h2 class="nome-posto"></h2>
+    <p class="endereco"></p>
+    <div class="veredito-grande"></div>
+    <h3 class="secao">Preços neste posto</h3>
+    <div class="tabela"></div>
+    <div class="acoes"><a href="https://www.google.com/maps/dir/?api=1&destination=${destino}" target="_blank" rel="noopener">Ir pelo Google Maps</a><a class="secundario" href="https://waze.com/ul?ll=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a></div>
+    <h3 class="secao comparar-titulo"></h3>
+    <ol class="lista comparar"></ol>`;
+  box.querySelector(".marca-nome").textContent = m.nome;
+  box.querySelector(".nome-posto").textContent = p.nome;
+  box.querySelector(".endereco").textContent = [[p.endereco + (p.numero ? ", " + p.numero : ""), p.bairro].filter(Boolean).join(" · "), p.cidade].filter(Boolean).join(" · ");
+  box.querySelector(".voltar").onclick = voltarParaLista;
+  box.querySelector(".tabela").appendChild(tabelaPrecos(p));
+  if (!Object.keys(p.precos).length) {
+    const av = document.createElement("p"); av.className = "aviso";
+    av.textContent = "A ANP não pesquisou o preço deste posto nas últimas semanas. Endereço e combustíveis vêm do cadastro oficial da ANP.";
+    box.querySelector(".tabela").appendChild(av);
   }
-  este.on("close", () => {
-    if (balao !== este) return;          // trocado por outro balão: nada a fazer
-    balao = null; estado.selecionado = null; desenhar();
-  });
-  balao = este;
+
+  // Veredito do combustível escolhido.
+  const nomeComb = COMBUSTIVEIS.find((c) => c[0] === estado.combustivel)[1].toLowerCase();
+  const eu = linhas.find((l) => l.p.cnpj === p.cnpj);
+  const v = box.querySelector(".veredito-grande");
+  if (eu && eu.total != null) {
+    const [classe] = vereditoTexto(eu);
+    const titulo = eu.veredito === "compensa" ? `Compensa vir aqui: economiza ${brl(eu.economia)}`
+      : eu.veredito === "nao" ? `Não compensa: perde ${brl(-eu.economia)}`
+      : eu.veredito === "perto" ? "É o posto mais perto de você" : "Dá na mesma que o mais perto";
+    v.className = "veredito-grande " + classe;
+    v.innerHTML = `<b></b><span>${km1(eu.km)}${eu.real ? "" : " ≈"} · ${Math.max(1, Math.round(eu.min))} min de carro · ${brl(eu.total)} no total para ${estado.litros} L de ${nomeComb}, contando ida e volta e o seu tempo</span>`;
+    v.querySelector("b").textContent = titulo;
+  } else if (!p.precos[estado.combustivel]) {
+    v.innerHTML = `<span>Sem preço de ${nomeComb} da ANP para este posto, então não dá para dizer se compensa.</span>`;
+  } else v.remove();
+
+  // Comparação: os que saem mais barato no total e o mais perto, com a diferença para este.
+  const outros = linhas.filter((l) => l.p.cnpj !== p.cnpj && l.total != null);
+  const escolha = outros.slice(0, 5);
+  if (perto && perto.p.cnpj !== p.cnpj && !escolha.includes(perto)) escolha.push(perto);
+  box.querySelector(".comparar-titulo").textContent = escolha.length ? `Compare com outros postos (${nomeComb})` : "";
+  const ol = box.querySelector(".comparar");
+  for (const l of escolha) {
+    const li = document.createElement("li");
+    li.className = "item";
+    let dif = "", classe = "v-empata";
+    if (eu && eu.total != null) {
+      const d = l.total - eu.total;
+      if (Math.abs(d) < EMPATE) dif = "dá na mesma";
+      else if (d < 0) { dif = `sai ${brl(-d)} mais barato`; classe = "v-compensa"; }
+      else { dif = `sai ${brl(d)} mais caro`; classe = "v-nao"; }
+    } else [classe, dif] = vereditoTexto(l);
+    li.innerHTML = `
+      <span class="nome"></span>
+      <span class="preco">${brl(l.preco)}</span>
+      <span class="meta">${km1(l.km)}${l.real ? "" : " ≈"}${l === perto ? " · o mais perto" : ""}</span>
+      <span class="veredito ${classe}"></span>`;
+    li.querySelector(".nome").textContent = l.p.nome;
+    li.querySelector(".veredito").textContent = dif;
+    li.addEventListener("click", () => selecionar(l.p.cnpj, true));
+    ol.appendChild(li);
+  }
+}
+
+function voltarParaLista() {
+  const era = estado.selecionado;
+  estado.selecionado = null;
+  desenhar();
+  const item = era && document.querySelector(`#lista .item[data-cnpj="${era}"]`);
+  if (item) item.scrollIntoView({ block: "center" });
 }
 
 function desenharDestaque(l, modo, perto, n) {
@@ -329,9 +379,18 @@ function desenharMarcadores(linhas, melhor, semPreco = [], perto = null) {
   const comLocal = linhas.filter((l) => l.p.lat != null);
   const rotulados = new Set(comLocal.slice(0, ROTULOS).map((l) => l.p.cnpj));
   if (perto) rotulados.add(perto.p.cnpj);
-  rotulados.delete(estado.selecionado);   // o escolhido já tem o balão com o preço: rótulo ficaria por cima
+  if (estado.selecionado) rotulados.add(estado.selecionado);
 
-  pontosPendentes = semPreco.map((p) => ponto(p, "cinza"));
+  // Escolhido sem preço deste combustível: ganha um rótulo próprio para se ver onde está.
+  const escolhidoCinza = semPreco.find((p) => p.cnpj === estado.selecionado);
+  pontosPendentes = semPreco.filter((p) => p !== escolhidoCinza).map((p) => ponto(p, "cinza"));
+  if (escolhidoCinza) {
+    const el = document.createElement("div");
+    el.className = "pino ativo sem";
+    el.textContent = "sem preço";
+    marcadores.set(escolhidoCinza.cnpj, new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] })
+      .setLngLat([escolhidoCinza.lon, escolhidoCinza.lat]).addTo(mapa));
+  }
   for (const l of comLocal) {
     if (!rotulados.has(l.p.cnpj)) {
       pontosPendentes.push(ponto(l.p, l.veredito === "compensa" ? "compensa" : l.veredito === "nao" ? "nao" : "neutro"));
@@ -349,20 +408,19 @@ function desenharMarcadores(linhas, melhor, semPreco = [], perto = null) {
     marcadores.set(l.p.cnpj, m);
   }
   aplicarCamadas();
-  // A conta (rota real) pode ter chegado depois: atualiza o balão aberto.
-  if (balao && estado.selecionado) {
-    const p = estado.postos.find((x) => x.cnpj === estado.selecionado);
-    if (p) balao.setDOMContent(conteudoBalao(p));
-  }
 }
 
 function selecionar(cnpj, voar) {
   estado.selecionado = cnpj;
   desenhar();
+  // A ficha abre no topo do painel (no celular, o painel é a parte de baixo da tela).
+  $("#painel").scrollTop = 0;
+  $("#detalhe").scrollIntoView({ block: "start" });
   const p = estado.postos.find((x) => x.cnpj === cnpj);
-  abrirBalao(p, voar);
-  const item = document.querySelector(`.item[data-cnpj="${cnpj}"]`);
-  if (item && !voar) item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  if (p && p.lat != null) {
+    const fora = !mapa.getBounds().contains([p.lon, p.lat]);
+    if (voar || fora) mapa.flyTo({ center: [p.lon, p.lat], zoom: Math.max(mapa.getZoom(), 14) });
+  }
 }
 
 /* ---------- origem e rotas ---------- */
@@ -437,7 +495,6 @@ async function buscarRotas() {
 async function abrirCidade(info) {
   estado.cidade = info;
   estado.selecionado = null;
-  abrirBalao(null);
   guardar("cidade", info.arquivo);
   $("#cidade").value = `${info.cidade} - ${info.uf}`;
   const r = await fetch(`dados/cidade/${info.arquivo}.json`);
@@ -508,6 +565,8 @@ async function iniciar() {
       if (v > 0 || (chave === "hora" && v === 0)) { estado[chave] = v; guardar(chave, v); desenhar(); }
     });
   }
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && estado.selecionado) voltarParaLista(); });
 
   estado.indice = await (await fetch("dados/cidades.json")).json();
   const dl = $("#lista-cidades");
