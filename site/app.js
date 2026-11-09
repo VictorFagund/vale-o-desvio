@@ -18,7 +18,7 @@ const estado = {
   indice: null, cidade: null, postos: [], combustivel: "gasolina",
   litros: 40, consumo: 10, hora: 15, origem: null, rotas: new Map(), selecionado: null,
 };
-let mapa, marcadores = new Map(), marcadorVoce = null, pedidoRotas = 0;
+let mapa, marcadores = new Map(), marcadorVoce = null, pedidoRotas = 0, balao = null;
 
 function guardar(k, v) { try { localStorage.setItem("vod:" + k, v); } catch (_) {} }
 function ler(k) { try { return localStorage.getItem("vod:" + k); } catch (_) { return null; } }
@@ -93,10 +93,10 @@ function desenhar() {
   const nomeComb = COMBUSTIVEIS.find((c) => c[0] === estado.combustivel)[1];
   const lista = $("#lista");
   lista.innerHTML = "";
-  const escolhidoSemPreco = semPreco.find((p) => p.cnpj === estado.selecionado);
+  estado.linhaDe = new Map(linhas.map((l) => [l.p.cnpj, l]));   // o balão do mapa usa a conta do posto
 
   if (!linhas.length) {
-    if (escolhidoSemPreco) desenharSemPreco(escolhidoSemPreco); else $("#destaque").innerHTML = "";
+    $("#destaque").innerHTML = "";
     $("#titulo-lista").textContent = semPreco.length ? `${semPreco.length} postos na cidade, sem preço da ANP` : "";
     lista.innerHTML = `<li><p class="aviso">A ANP não pesquisa preço de ${nomeComb.toLowerCase()} em ${estado.cidade.cidade}${semPreco.length ? ". Os postos estão no mapa, em cinza, para você ver onde ficam." : "."}</p></li>`;
     for (const p of perto1(semPreco)) lista.appendChild(itemSemPreco(p));
@@ -105,8 +105,7 @@ function desenhar() {
   }
 
   const melhor = linhas[0];
-  if (escolhidoSemPreco) desenharSemPreco(escolhidoSemPreco);
-  else desenharDestaque(melhor, modo, perto, linhas.length);
+  desenharDestaque(melhor, modo, perto, linhas.length);
   $("#titulo-lista").textContent = modo === "completo"
     ? `${linhas.length} postos com preço, do que sai mais barato no total para o mais caro`
     : `${linhas.length} postos por preço (sem mapa para esta cidade ainda)`;
@@ -129,10 +128,10 @@ function desenhar() {
   }
   if (semPreco.length) {
     const li = document.createElement("li");
-    li.innerHTML = `<p class="aviso">Mais ${semPreco.length} postos na cidade sem preço da ANP para ${nomeComb.toLowerCase()}. Estão no mapa em cinza: a ANP pesquisa só uma amostra.</p>`;
+    li.innerHTML = `<p class="aviso">Mais ${semPreco.length} postos na cidade sem preço da ANP para ${nomeComb.toLowerCase()}. Aparecem em cinza quando você aproxima o mapa: a ANP pesquisa só uma amostra.</p>`;
     lista.appendChild(li);
   }
-  desenharMarcadores(linhas, melhor, semPreco);
+  desenharMarcadores(linhas, melhor, semPreco, perto);
 }
 
 // Sem preço, o que ajuda é a ordem de distância de quem está procurando.
@@ -153,21 +152,72 @@ function itemSemPreco(p) {
   return li;
 }
 
-function desenharSemPreco(p) {
-  const box = $("#destaque");
-  box.className = "destaque neutro";
+/* ---------- balão do posto (clique no mapa ou na lista) ---------- */
+function conteudoBalao(p) {
+  const el = document.createElement("div");
+  el.className = "balao";
+  const h = document.createElement("h4"); h.textContent = p.nome; el.appendChild(h);
+  const sub = document.createElement("div"); sub.className = "sub";
+  sub.textContent = [[p.endereco + (p.numero ? ", " + p.numero : ""), p.bairro].filter(Boolean).join(" · "), p.bandeira].filter(Boolean).join(" · ");
+  el.appendChild(sub);
+
+  // A conta do combustível escolhido (distância, tempo, se compensa).
+  const l = estado.linhaDe?.get(p.cnpj);
+  if (l && l.km != null) {
+    const conta = document.createElement("div"); conta.className = "conta";
+    const [classe, txt] = vereditoTexto(l);
+    conta.innerHTML = `<span>${km1(l.km)}${l.real ? "" : " ≈"} · ${Math.max(1, Math.round(l.min))} min</span><b class="${classe}"></b>`;
+    conta.querySelector("b").textContent = txt;
+    el.appendChild(conta);
+  }
+
+  // Todos os combustíveis: com preço da ANP ou só "vende".
+  const tab = document.createElement("table");
+  const chaves = COMBUSTIVEIS.map((c) => c[0]).filter((k) => p.precos[k] || (p.vende || []).includes(k));
+  for (const k of chaves) {
+    const tr = document.createElement("tr");
+    if (k === estado.combustivel) tr.className = "atual";
+    const pr = p.precos[k];
+    const idade = pr ? idadeTexto(pr.data) : null;
+    tr.innerHTML = `<th></th><td class="valor">${pr ? brl(pr.valor) : "sem preço"}</td><td class="idade ${idade?.velho ? "velho" : ""}">${idade ? idade.texto.replace("ANP, coletado ", "") : ""}</td>`;
+    tr.querySelector("th").textContent = Object.fromEntries(COMBUSTIVEIS)[k];
+    tab.appendChild(tr);
+  }
+  if (chaves.length) el.appendChild(tab);
+  if (!Object.keys(p.precos).length) {
+    const av = document.createElement("p"); av.className = "nota";
+    av.textContent = "A ANP não pesquisou o preço deste posto nas últimas semanas.";
+    el.appendChild(av);
+  }
   const destino = `${p.lat},${p.lon}`;
-  const nomes = Object.fromEntries(COMBUSTIVEIS);
-  const vende = (p.vende || []).map((k) => nomes[k]).filter(Boolean).join(", ");
-  box.innerHTML = `
-    <div class="rotulo">Sem preço da ANP</div>
-    <h3></h3>
-    <div class="sub"></div>
-    <p class="aviso"></p>
-    <div class="acoes"><a href="https://www.google.com/maps/dir/?api=1&destination=${destino}" target="_blank" rel="noopener">Ir pelo Google Maps</a><a class="secundario" href="https://waze.com/ul?ll=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a></div>`;
-  box.querySelector("h3").textContent = p.nome;
-  box.querySelector(".sub").textContent = [[p.endereco + (p.numero ? ", " + p.numero : ""), p.bairro].filter(Boolean).join(" · "), p.bandeira].filter(Boolean).join(" · ");
-  box.querySelector(".aviso").textContent = (vende ? `Vende ${vende}. ` : "") + "A ANP não pesquisou o preço deste posto nas últimas semanas. Local e combustíveis vêm do cadastro oficial da ANP.";
+  const acoes = document.createElement("div"); acoes.className = "acoes";
+  acoes.innerHTML = `<a href="https://www.google.com/maps/dir/?api=1&destination=${destino}" target="_blank" rel="noopener">Google Maps</a><a class="secundario" href="https://waze.com/ul?ll=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a>`;
+  el.appendChild(acoes);
+  return el;
+}
+
+const telaEstreita = () => innerWidth < 760;   // celular: mapa é a faixa de cima, painel cobre o resto
+
+function abrirBalao(p, voar = false) {
+  const antigo = balao; balao = null;
+  if (antigo) antigo.remove();
+  if (!p || p.lat == null) return;
+  const opcoes = { maxWidth: "280px", offset: 14, focusAfterOpen: false };
+  if (telaEstreita()) opcoes.anchor = "bottom";   // sempre para cima: embaixo fica o painel
+  const este = new maplibregl.Popup(opcoes)
+    .setLngLat([p.lon, p.lat]).setDOMContent(conteudoBalao(p)).addTo(mapa);
+  if (telaEstreita()) {
+    // Leva o posto para perto da borda de baixo do mapa, para o balão caber em cima dele.
+    const h = mapa.getContainer().clientHeight;
+    mapa.easeTo({ center: [p.lon, p.lat], offset: [0, h / 2 - 24], zoom: voar ? Math.max(mapa.getZoom(), 14) : mapa.getZoom(), duration: 300 });
+  } else if (voar) {
+    mapa.flyTo({ center: [p.lon, p.lat], zoom: Math.max(mapa.getZoom(), 14) });
+  }
+  este.on("close", () => {
+    if (balao !== este) return;          // trocado por outro balão: nada a fazer
+    balao = null; estado.selecionado = null; desenhar();
+  });
+  balao = este;
 }
 
 function desenharDestaque(l, modo, perto, n) {
@@ -219,24 +269,74 @@ function estiloMapa() {
 function iniciarMapa() {
   mapa = new maplibregl.Map({ container: "mapa", style: estiloMapa(), center: [-49.27, -25.43], zoom: 11, attributionControl: { compact: true } });
   mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-  mapa.on("click", (e) => definirOrigem({ lat: e.lngLat.lat, lon: e.lngLat.lng }, "manual"));
+  // Clique numa bolinha abre o posto; clique no vazio muda o ponto de saída.
+  mapa.on("click", (e) => {
+    const r = 10, pt = e.point;
+    const f = estiloPronto ? mapa.queryRenderedFeatures([[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]], { layers: CAMADAS }) : [];
+    if (f.length) selecionar(f[0].properties.cnpj, false);
+    else definirOrigem({ lat: e.lngLat.lat, lon: e.lngLat.lng }, "manual");
+  });
+  mapa.on("load", () => { estiloPronto = true; aplicarCamadas(); });
+  for (const c of CAMADAS) {
+    mapa.on("mouseenter", c, () => { mapa.getCanvas().style.cursor = "pointer"; });
+    mapa.on("mouseleave", c, () => { mapa.getCanvas().style.cursor = ""; });
+  }
 }
 
-function desenharMarcadores(linhas, melhor, semPreco = []) {
+/* Bolinhas são uma camada do próprio mapa (rápido com 1.500 postos); rótulo de preço só nos melhores. */
+const CAMADAS = ["postos-cinza", "postos-preco"];
+const ROTULOS = 10;
+let estiloPronto = false, pontosPendentes = [];
+
+function cor(nome) { return getComputedStyle(document.documentElement).getPropertyValue(nome).trim(); }
+
+function aplicarCamadas() {
+  if (!estiloPronto) return;
+  const dados = { type: "FeatureCollection", features: pontosPendentes };
+  const fonte = mapa.getSource("postos");
+  if (fonte) { fonte.setData(dados); return; }
+  mapa.addSource("postos", { type: "geojson", data: dados });
+  const borda = cor("--painel");
+  mapa.addLayer({
+    id: "postos-cinza", type: "circle", source: "postos", minzoom: 12.5,
+    filter: ["==", ["get", "tipo"], "cinza"],
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, 3, 16, 6],
+      "circle-color": cor("--suave"), "circle-opacity": 0.7,
+      "circle-stroke-color": borda, "circle-stroke-width": 1.5,
+    },
+  });
+  mapa.addLayer({
+    id: "postos-preco", type: "circle", source: "postos",
+    filter: ["!=", ["get", "tipo"], "cinza"],
+    paint: {
+      // Só o que compensa ganha cor; o resto fica neutro para não poluir.
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, ["match", ["get", "tipo"], "compensa", 5, 3.5], 15, 7],
+      "circle-color": ["match", ["get", "tipo"], "compensa", cor("--verde"), cor("--texto")],
+      "circle-opacity": ["match", ["get", "tipo"], "compensa", 1, 0.55],
+      "circle-stroke-color": borda, "circle-stroke-width": 1.5,
+    },
+  });
+}
+
+function ponto(p, tipo) {
+  return { type: "Feature", geometry: { type: "Point", coordinates: [p.lon, p.lat] }, properties: { cnpj: p.cnpj, tipo } };
+}
+
+function desenharMarcadores(linhas, melhor, semPreco = [], perto = null) {
   for (const m of marcadores.values()) m.remove();
   marcadores.clear();
-  // Cinza primeiro, para os preços ficarem por cima.
-  for (const p of semPreco) {
-    const el = document.createElement("button");
-    el.type = "button";
-    el.className = "ponto-cinza" + (estado.selecionado === p.cnpj ? " ativo" : "");
-    el.title = `${p.nome} (sem preço da ANP)`;
-    el.setAttribute("aria-label", el.title);
-    el.addEventListener("click", (ev) => { ev.stopPropagation(); selecionar(p.cnpj, false); });
-    marcadores.set(p.cnpj, new maplibregl.Marker({ element: el }).setLngLat([p.lon, p.lat]).addTo(mapa));
-  }
-  for (const l of linhas) {
-    if (l.p.lat == null) continue;
+  const comLocal = linhas.filter((l) => l.p.lat != null);
+  const rotulados = new Set(comLocal.slice(0, ROTULOS).map((l) => l.p.cnpj));
+  if (perto) rotulados.add(perto.p.cnpj);
+  rotulados.delete(estado.selecionado);   // o escolhido já tem o balão com o preço: rótulo ficaria por cima
+
+  pontosPendentes = semPreco.map((p) => ponto(p, "cinza"));
+  for (const l of comLocal) {
+    if (!rotulados.has(l.p.cnpj)) {
+      pontosPendentes.push(ponto(l.p, l.veredito === "compensa" ? "compensa" : l.veredito === "nao" ? "nao" : "neutro"));
+      continue;
+    }
     const el = document.createElement("button");
     el.type = "button";
     el.className = "pino" +
@@ -248,13 +348,19 @@ function desenharMarcadores(linhas, melhor, semPreco = []) {
     const m = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] }).setLngLat([l.p.lon, l.p.lat]).addTo(mapa);
     marcadores.set(l.p.cnpj, m);
   }
+  aplicarCamadas();
+  // A conta (rota real) pode ter chegado depois: atualiza o balão aberto.
+  if (balao && estado.selecionado) {
+    const p = estado.postos.find((x) => x.cnpj === estado.selecionado);
+    if (p) balao.setDOMContent(conteudoBalao(p));
+  }
 }
 
 function selecionar(cnpj, voar) {
   estado.selecionado = cnpj;
   desenhar();
   const p = estado.postos.find((x) => x.cnpj === cnpj);
-  if (voar && p && p.lat != null) mapa.flyTo({ center: [p.lon, p.lat], zoom: Math.max(mapa.getZoom(), 14) });
+  abrirBalao(p, voar);
   const item = document.querySelector(`.item[data-cnpj="${cnpj}"]`);
   if (item && !voar) item.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
@@ -331,6 +437,7 @@ async function buscarRotas() {
 async function abrirCidade(info) {
   estado.cidade = info;
   estado.selecionado = null;
+  abrirBalao(null);
   guardar("cidade", info.arquivo);
   $("#cidade").value = `${info.cidade} - ${info.uf}`;
   const r = await fetch(`dados/cidade/${info.arquivo}.json`);
