@@ -46,3 +46,13 @@ python -m http.server 8731 --directory site
 - O local do cadastro é informado pelo posto ou pelo fiscal; a ANP marca como "não validado".
 - O servidor público do OSRM é de demonstração. Para uso real, hospedar o próprio ou usar um pago.
 - Avaliação e horário de funcionamento ainda não existem (precisariam do Google Places).
+
+## Status e projeção
+
+Protótipo no ar, só com dados públicos oficiais. Próximos passos, em ordem:
+
+1. Medir uso real (quais cidades são buscadas) antes de investir em mais dados.
+2. Preço enviado por usuário, com o QR Code da nota fiscal (NFC-e) como prova, para cobrir as cidades
+   e semanas que a ANP não cobre.
+3. Atualização semanal automática dos dados pelo próprio GitHub Actions.
+4. Alerta de preço: avisar quando o posto escolhido baixar.
