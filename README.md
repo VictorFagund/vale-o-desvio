@@ -3,6 +3,10 @@
 Mostra qual posto **compensa de verdade**: preço × litros + combustível da ida e volta + o tempo
 da ida e volta, comparado com o posto mais perto de você.
 
+![Vale o Desvio em São Paulo](img/site.png)
+
+No ar: https://victorfagund.github.io/vale-o-desvio/
+
 - Preços: levantamento semanal da ANP (amostra; ~420 cidades, ~6 mil postos com preço).
 - Postos e localização: cadastro oficial da ANP ([API Revendedores](https://revendedoresapi.anp.gov.br/swagger/index.html),
   sem chave). Todo posto autorizado do país (~39 mil com local), com bandeira e combustíveis.
